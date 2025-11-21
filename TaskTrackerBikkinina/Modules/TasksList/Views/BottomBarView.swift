@@ -9,12 +9,9 @@ import UIKit
 
 class BottomBarView: UIView {
 
-    /*
-    // Only override draw() if you perform custom drawing.
-    // An empty implementation adversely affects performance during animation.
-    override func draw(_ rect: CGRect) {
-        // Drawing code
-    }
-    */
+//    private lazy var bottomView: UIView = {
+//        let view = UIView()
+//        view.backgroundColor = 
+//    }
 
 }
