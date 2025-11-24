@@ -12,6 +12,9 @@ protocol TaskListPresenterProtocol {
     func cellForRowAt(_ index: Int) -> TaskModel
 }
 
-protocol TaskTableViewCellProtocol {
-    func setUp(task: TaskModel)
+protocol TaskListInteractorProtocol {
+    func createTask(from: TaskDTO)
+    func getAllTasks() -> [TaskModel]
+    func getTask(withID id: UUID) -> TaskModel?
+    func updateTask(withID id: UUID, newTask: TaskDTO) -> Bool
 }
