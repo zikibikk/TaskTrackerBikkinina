@@ -8,8 +8,14 @@
 import UIKit
 
 protocol TaskListPresenterProtocol {
+    func viewDidLoad()
     func numberOfRowsInSection() -> Int
-    func cellForRowAt(_ index: Int) -> TaskModel
+    func cellForRowAt(indexPath: IndexPath) -> TaskModel
+    func didSelectRowAt(indexPath: IndexPath)
+}
+
+protocol TaskListViewProtocol: UIViewController {
+    func getBottomDescription(description: String)
 }
 
 protocol TaskListInteractorProtocol {

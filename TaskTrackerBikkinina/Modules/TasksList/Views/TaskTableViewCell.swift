@@ -10,22 +10,7 @@ import SnapKit
 
 class TaskTableViewCell: UITableViewCell {
     
-    var title: String? {
-        set { titleLable.text = newValue }
-        get { return titleLable.text}
-    }
-    
-    var text: String? {
-        set { descriptionLabel.text = newValue }
-        get { return descriptionLabel.text }
-    }
-    
-    var date: String? {
-        set { dateLabel.text = newValue }
-        get { return dateLabel.text}
-    }
-    
-    var isDone: Bool?
+    private var isDone: Bool?
     
     private lazy var titleLable: UILabel = {
         let titleLable = UILabel()
@@ -36,13 +21,7 @@ class TaskTableViewCell: UITableViewCell {
     
     private lazy var descriptionLabel: UILabel = {
         let descriptionLabel = UILabel()
-        
-        if isDone ?? false {
-            descriptionLabel.textColor = .lightGray
-        } else {
-            descriptionLabel.textColor = .white
-        }
-        
+        descriptionLabel.textColor = .white
         descriptionLabel.font = .systemFont(ofSize: 14, weight: .regular)
         return descriptionLabel
     }()
@@ -61,8 +40,7 @@ class TaskTableViewCell: UITableViewCell {
 
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
-
-        // Configure the view for the selected state
+        
     }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -78,6 +56,7 @@ class TaskTableViewCell: UITableViewCell {
 }
 
 extension TaskTableViewCell {
+    
     private func initialize() {
         self.contentView.backgroundColor = .black
         self.contentView.addSubview(titleLable)
@@ -104,5 +83,36 @@ extension TaskTableViewCell {
             make.right.equalToSuperview().inset(20)
             make.bottom.equalToSuperview().inset(12)
         }
+    }
+}
+
+extension TaskTableViewCell {
+    func configure(task: TaskModel) {
+        descriptionLabel.text = task.text
+        isDone = task.isDone
+        dateLabel.text = task.date
+        if task.isDone {
+            makeTaskCompleted(text: task.title)
+        } else {
+            titleLable.text = task.title
+        }
+    }
+    
+    func makeTaskCompleted(text: String) {
+        descriptionLabel.textColor = .lightGray
+        let attributed = NSAttributedString(
+            string: text,
+            attributes: [
+                .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+                .foregroundColor: UIColor.lightGray
+            ]
+        )
+        titleLable.attributedText = attributed
+    }
+    
+    func makeTaskUncompleted(text: String) {
+        descriptionLabel.textColor = .white
+        titleLable.text = text
+        titleLable.textColor = .white
     }
 }
