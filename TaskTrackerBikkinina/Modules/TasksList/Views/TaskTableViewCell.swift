@@ -16,6 +16,8 @@ class TaskTableViewCell: UITableViewCell {
         let titleLable = UILabel()
         titleLable.textColor = .white
         titleLable.font = .systemFont(ofSize: 18, weight: .medium)
+        titleLable.numberOfLines = 1
+        titleLable.lineBreakMode = .byTruncatingTail
         return titleLable
     }()
     
@@ -23,6 +25,8 @@ class TaskTableViewCell: UITableViewCell {
         let descriptionLabel = UILabel()
         descriptionLabel.textColor = .white
         descriptionLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        descriptionLabel.numberOfLines = 2
+        descriptionLabel.lineBreakMode = .byTruncatingTail
         return descriptionLabel
     }()
     
@@ -94,8 +98,20 @@ extension TaskTableViewCell {
         if task.isDone {
             makeTaskCompleted(text: task.title)
         } else {
-            titleLable.text = task.title
+            makeTaskUncompleted(text: task.title)
         }
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        titleLable.text = nil
+        titleLable.attributedText = nil
+        titleLable.textColor = .white
+        
+        descriptionLabel.text = nil
+        dateLabel.text = nil
+        descriptionLabel.textColor = .white
+        isDone = false
     }
     
     func makeTaskCompleted(text: String) {
@@ -111,8 +127,10 @@ extension TaskTableViewCell {
     }
     
     func makeTaskUncompleted(text: String) {
+        titleLable.attributedText = NSAttributedString(string: text, attributes: [
+            .strikethroughStyle: [],
+            .foregroundColor: UIColor.white
+        ])
         descriptionLabel.textColor = .white
-        titleLable.text = text
-        titleLable.textColor = .white
     }
 }
