@@ -14,6 +14,10 @@ protocol TaskListPresenterProtocol {
     func cellForRowAt(indexPath: IndexPath) -> TaskModel
     func didSelectRowAt(indexPath: IndexPath)
     func didTapAddTask()
+    func didLongTap(_ task: TaskModel)
+    func didTapDelete(_ task: TaskModel)
+    func didTapEdit(_ task: TaskModel)
+    func didTapShare(_ task: TaskModel)
 }
 
 protocol TaskListViewProtocol: UIViewController {
@@ -31,6 +35,10 @@ protocol TaskListInteractorProtocol {
 }
 
 protocol TaskListRouterProtocol {
+    func openEditTask(task: TaskModel)
+    func shareTask(_ task: TaskModel)
+    func deleteTask(_ task: TaskModel)
     func openTaskDetail(with task: TaskModel)
     func openCreateTaskScreen()
+    func presentTaskOptions(_ task: TaskModel)
 }

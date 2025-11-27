@@ -35,7 +35,7 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     private func loadTasks() {
         interactor.fetchTasksFromAPI { [weak self] models in
             self?.tasks = models
-            self?.view?.reloadTable()       // add this to protocol
+            self?.view?.reloadTable()
             self?.view?.getBottomDescription(description: "\(models.count) задач")
         }
     }
@@ -61,5 +61,25 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     
     func didTapAddTask() {
         router.openCreateTaskScreen()
+    }
+    
+    func didLongTap(_ task: TaskModel) {
+        router.presentTaskOptions(task)
+    }
+    
+    func didTapEdit(_ task: TaskModel) {
+        router.openEditTask(task: task)
+    }
+
+    func didTapShare(_ task: TaskModel) {
+        router.shareTask(task)
+    }
+
+    func didTapDelete(_ task: TaskModel) {
+        guard let id = task.id else { return }
+
+        interactor.deleteTask(withID: id) {_ in 
+            self.reloadTasks()
+        }
     }
 }

@@ -59,6 +59,8 @@ class TaskListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        tableView.addGestureRecognizer(longPress)
         presenter.viewDidLoad()
         initializeView()
         setUpConstraints()
@@ -95,6 +97,16 @@ extension TaskListViewController {
     
     @objc private func addTaskTapped() {
         presenter.didTapAddTask()
+    }
+    
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        let point = gesture.location(in: tableView)
+
+        guard let indexPath = tableView.indexPathForRow(at: point),
+              gesture.state == .began else { return }
+
+        let task = presenter.cellForRowAt(indexPath: indexPath)
+        presenter.didLongTap(task)
     }
     
     private func initializeView() {
