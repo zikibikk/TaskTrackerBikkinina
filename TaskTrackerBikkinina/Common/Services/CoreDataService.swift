@@ -79,7 +79,7 @@ extension CoreDataService {
         return try? viewContext.fetch(request).first
     }
 
-    // MARK: Update
+    // MARK: Update task
     func updateTask(id: UUID, with dto: TaskDTO, completion: ((Bool) -> Void)? = nil) {
         guard let task = fetchTask(id: id) else {
             completion?(false)
@@ -94,6 +94,32 @@ extension CoreDataService {
         } catch {
             print("Failed to update:", error)
             completion?(false)
+        }
+    }
+    
+    // MARK: Update status
+    func updateTaskStatus(id: UUID, isDone: Bool, completion: @escaping (Bool) -> Void) {
+
+        let context = newBackgroundContext() 
+        context.perform {
+            
+            let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+
+            guard let entity = try? context.fetch(fetchRequest).first else {
+                DispatchQueue.main.async { completion(false) }
+                return
+            }
+
+            entity.isDone = isDone
+
+            do {
+                try context.save()
+                DispatchQueue.main.async { completion(true) }
+            } catch {
+                print("Failed to update:", error)
+                DispatchQueue.main.async { completion(false) }
+            }
         }
     }
 
@@ -114,4 +140,6 @@ extension CoreDataService {
             completion?(false)
         }
     }
+    
+    
 }

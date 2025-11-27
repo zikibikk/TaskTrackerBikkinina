@@ -72,43 +72,8 @@ class TaskListViewController: UIViewController {
     }
 }
 
-
-extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        presenter.numberOfRowsInSection()
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let taskCell = tableView.dequeueReusableCell(withIdentifier: "\(TaskTableViewCell.self)", for: indexPath) as! TaskTableViewCell
-        
-        taskCell.configure(task: presenter.cellForRowAt(indexPath: indexPath))
-        return taskCell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        presenter.didSelectRowAt(indexPath: indexPath)
-        tableView.deselectRow(at: indexPath, animated: true)
-        
-    }
-}
-
+//MARK: initializing view
 extension TaskListViewController {
-    
-    @objc private func addTaskTapped() {
-        presenter.didTapAddTask()
-    }
-    
-    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        let point = gesture.location(in: tableView)
-
-        guard let indexPath = tableView.indexPathForRow(at: point),
-              gesture.state == .began else { return }
-
-        let task = presenter.cellForRowAt(indexPath: indexPath)
-        presenter.didLongTap(task)
-    }
-    
     private func initializeView() {
         self.view.addSubview(titleLabel)
         self.view.addSubview(searchBar)
@@ -148,6 +113,36 @@ extension TaskListViewController {
     }
 }
 
+//MARK: UITableViewDelegate, UITableViewDataSource
+extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        presenter.numberOfRowsInSection()
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let taskCell = tableView.dequeueReusableCell(withIdentifier: "\(TaskTableViewCell.self)", for: indexPath) as! TaskTableViewCell
+        
+        taskCell.configure(task: presenter.cellForRowAt(indexPath: indexPath))
+        taskCell.delegate = self
+        return taskCell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        presenter.didSelectRowAt(indexPath: indexPath)
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+    }
+}
+
+extension TaskListViewController: TaskTableViewCellDelegate {
+    func taskCellDidToggleStatus(_ cell: TaskTableViewCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        presenter.didTapStatus(at: indexPath)
+    }
+}
+
+//MARK: TaskListViewProtocol
 extension TaskListViewController: TaskListViewProtocol {
     func getBottomDescription(description: String) {
         self.bottomLabel.text = description
@@ -156,4 +151,28 @@ extension TaskListViewController: TaskListViewProtocol {
     func reloadTable() {
         tableView.reloadData()
     }
+    
+    func reloadRow(at indexPath: IndexPath) {
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
 }
+
+
+//MARK: @objc-s
+extension TaskListViewController {
+    
+    @objc private func addTaskTapped() {
+        presenter.didTapAddTask()
+    }
+    
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        let point = gesture.location(in: tableView)
+
+        guard let indexPath = tableView.indexPathForRow(at: point),
+              gesture.state == .began else { return }
+
+        let task = presenter.cellForRowAt(indexPath: indexPath)
+        presenter.didLongTap(task)
+    }
+}
+

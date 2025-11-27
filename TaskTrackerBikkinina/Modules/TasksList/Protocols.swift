@@ -18,11 +18,17 @@ protocol TaskListPresenterProtocol {
     func didTapDelete(_ task: TaskModel)
     func didTapEdit(_ task: TaskModel)
     func didTapShare(_ task: TaskModel)
+    func didTapStatus(at indexPath: IndexPath)
+}
+
+protocol TaskTableViewCellDelegate: AnyObject {
+    func taskCellDidToggleStatus(_ cell: TaskTableViewCell)
 }
 
 protocol TaskListViewProtocol: UIViewController {
     func getBottomDescription(description: String)
     func reloadTable()
+    func reloadRow(at indexPath: IndexPath)
 }
 
 protocol TaskListInteractorProtocol {
@@ -32,6 +38,7 @@ protocol TaskListInteractorProtocol {
     func getTask(withID id: UUID) -> TaskModel?
     func updateTask(withID id: UUID, newTask: TaskDTO, completion: ((Bool) -> Void)?)
     func deleteTask(withID id: UUID, completion: ((Bool) -> Void)?)
+    func updateTaskStatus(id: UUID, isDone: Bool, completion: @escaping () -> Void)
 }
 
 protocol TaskListRouterProtocol {

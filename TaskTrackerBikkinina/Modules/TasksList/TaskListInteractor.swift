@@ -15,6 +15,12 @@ class TaskListInteractor {
 
 extension TaskListInteractor: TaskListInteractorProtocol {
     
+    func updateTaskStatus(id: UUID, isDone: Bool, completion: @escaping () -> Void) {
+        coreDataService.updateTaskStatus(id: id, isDone: isDone) { _ in
+            completion()
+        }
+    }
+    
     func fetchTasksFromAPI(completion: @escaping ([TaskModel]) -> Void) {
         APIService.shared.fetchTasks { [weak self] result in
             switch result {
