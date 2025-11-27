@@ -10,7 +10,7 @@ import SnapKit
 
 class TaskListViewController: UIViewController {
     
-    private let presenter: TaskListPresenterProtocol
+    var presenter: TaskListPresenterProtocol!
     
     private lazy var titleLabel: UILabel = {
         let titleLabel = UILabel()
@@ -47,51 +47,39 @@ class TaskListViewController: UIViewController {
         return titleLabel
     }()
     
+    private lazy var addTaskButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "square.and.pencil", withConfiguration: UIImage.SymbolConfiguration(pointSize: 28, weight: .medium))
+        button.setImage(image, for: .normal)
+        button.tintColor = .systemYellow
+        button.backgroundColor = .clear
+        button.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
+        return button
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        tableView.addGestureRecognizer(longPress)
         presenter.viewDidLoad()
         initializeView()
         setUpConstraints()
-        // Do any additional setup after loading the view.
-    }
-
-    init(tasksPresenter: TaskListPresenterProtocol) {
-        presenter = tasksPresenter
-        super.init(nibName: nil, bundle: nil)
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-}
-
-
-extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        presenter.numberOfRowsInSection()
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let taskCell = tableView.dequeueReusableCell(withIdentifier: "\(TaskTableViewCell.self)", for: indexPath) as! TaskTableViewCell
-        
-        taskCell.configure(task: presenter.cellForRowAt(indexPath: indexPath))
-        return taskCell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        presenter.didSelectRowAt(indexPath: indexPath)
-        
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewWillAppear()
     }
 }
 
+//MARK: initializing view
 extension TaskListViewController {
     private func initializeView() {
         self.view.addSubview(titleLabel)
         self.view.addSubview(searchBar)
         self.view.addSubview(tableView)
         self.view.addSubview(bottomLabel)
+        self.view.addSubview(addTaskButton)
     }
     
     private func setUpConstraints() {
@@ -117,11 +105,74 @@ extension TaskListViewController {
             make.top.equalTo(tableView.snp.bottom)
             make.left.right.width.bottom.equalToSuperview()
         }
+        
+        addTaskButton.snp.makeConstraints { make in
+            make.centerY.equalTo(bottomLabel.snp.centerY)
+            make.right.equalToSuperview().inset(20)
+        }
     }
 }
 
+//MARK: UITableViewDelegate, UITableViewDataSource
+extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        presenter.numberOfRowsInSection()
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let taskCell = tableView.dequeueReusableCell(withIdentifier: "\(TaskTableViewCell.self)", for: indexPath) as! TaskTableViewCell
+        
+        taskCell.configure(task: presenter.cellForRowAt(indexPath: indexPath))
+        taskCell.delegate = self
+        return taskCell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        presenter.didSelectRowAt(indexPath: indexPath)
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+    }
+}
+
+extension TaskListViewController: TaskTableViewCellDelegate {
+    func taskCellDidToggleStatus(_ cell: TaskTableViewCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        presenter.didTapStatus(at: indexPath)
+    }
+}
+
+//MARK: TaskListViewProtocol
 extension TaskListViewController: TaskListViewProtocol {
     func getBottomDescription(description: String) {
         self.bottomLabel.text = description
     }
+    
+    func reloadTable() {
+        tableView.reloadData()
+    }
+    
+    func reloadRow(at indexPath: IndexPath) {
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
 }
+
+
+//MARK: @objc-s
+extension TaskListViewController {
+    
+    @objc private func addTaskTapped() {
+        presenter.didTapAddTask()
+    }
+    
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        let point = gesture.location(in: tableView)
+
+        guard let indexPath = tableView.indexPathForRow(at: point),
+              gesture.state == .began else { return }
+
+        let task = presenter.cellForRowAt(indexPath: indexPath)
+        presenter.didLongTap(task)
+    }
+}
+

@@ -8,93 +8,97 @@
 import UIKit
 import SnapKit
 
-class TaskViewController: UIViewController {
-    
-    private let presenter: TaskPresenterProtocol
+final class TaskViewController: UIViewController {
 
-    private lazy var titleLabel: UILabel = {
-        let titleLabel = UILabel()
-        titleLabel.textColor = .white
-        titleLabel.font = .systemFont(ofSize: 36, weight: .bold)
-        titleLabel.numberOfLines = 0
-        return titleLabel
+    var presenter: TaskPresenterProtocol!
+
+    private lazy var titleLabel: UITextField = {
+        let tf = UITextField()
+        tf.textColor = .white
+        tf.font = .systemFont(ofSize: 28, weight: .bold)
+        tf.placeholder = "Название"
+        return tf
     }()
-    
+
     private lazy var dateLabel: UILabel = {
-        let dateLabel = UILabel()
-        dateLabel.textColor = .lightGray
-        dateLabel.font = .systemFont(ofSize: 14, weight: .regular)
-        return dateLabel
+        let label = UILabel()
+        label.textColor = .lightGray
+        label.font = .systemFont(ofSize: 14)
+        return label
     }()
-    
+
     private lazy var textView: UITextView = {
         let tv = UITextView()
-        tv.textContainerInset = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
         tv.textColor = .white
-        tv.textAlignment = .left
-        tv.keyboardType = .default
         tv.backgroundColor = .clear
         tv.font = .systemFont(ofSize: 16)
         tv.isEditable = true
-        tv.isScrollEnabled = false
         return tv
     }()
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        presenter.viewDidLoad()
+
+        view.backgroundColor = .black
+        setupNavigationBar()
         initializeView()
         setUpConstraints()
+        presenter.viewDidLoad()
     }
 
-    init(taskPresenter: TaskPresenterProtocol) {
-        presenter = taskPresenter
-        super.init(nibName: nil, bundle: nil)
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+
+        presenter.viewWillDisappear(
+            title: titleLabel.text ?? "",
+            text: textView.text ?? ""
+        )
     }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+
+    private func setupNavigationBar() {
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar.tintColor = .systemYellow
     }
-    
 }
 
 extension TaskViewController {
+
     private func initializeView() {
-        self.view.backgroundColor = .black
-        self.view.addSubview(titleLabel)
-        self.view.addSubview(dateLabel)
-        self.view.addSubview(textView)
+        view.addSubview(titleLabel)
+        view.addSubview(dateLabel)
+        view.addSubview(textView)
     }
-    
+
     private func setUpConstraints() {
-        
+
         titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().inset(50)
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(16)
             make.left.right.equalToSuperview().inset(20)
         }
-        
+
         dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.top.equalTo(titleLabel.snp.bottom).offset(6)
             make.left.equalTo(titleLabel)
         }
-        
+
         textView.snp.makeConstraints { make in
-            make.top.equalTo(dateLabel.snp.bottom).offset(16)
+            make.top.equalTo(dateLabel.snp.bottom).offset(12)
             make.left.right.equalTo(titleLabel)
+            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).inset(20)
         }
     }
 }
 
 extension TaskViewController: TaskViewProtocol {
-    func getTitle(taskTitle title: String) {
+
+    func fill(title: String, date: String, text: String?) {
         titleLabel.text = title
-    }
-    
-    func getDate(date: String) {
         dateLabel.text = date
-    }
-    
-    func getText(taskText text: String) {
         textView.text = text
+    }
+
+    func setEditable(_ editable: Bool) {
+        titleLabel.isEnabled = editable
+        textView.isEditable = editable
     }
 }

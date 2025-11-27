@@ -16,6 +16,10 @@ public class TaskEntity: NSManagedObject {
     @NSManaged public var date: Date
     @NSManaged public var isDone: Bool
     
+    @nonobjc public class func fetchRequest() -> NSFetchRequest<TaskEntity> {
+            return NSFetchRequest<TaskEntity>(entityName: "TaskEntity")
+        }
+    
     override public func awakeFromInsert() {
         super.awakeFromInsert()
         self.id = UUID()
@@ -33,6 +37,21 @@ extension TaskEntity {
     }
 }
 
+struct APITask: Decodable {
+    let id: Int
+    let todo: String
+    let completed: Bool
+    let userId: Int
+    
+    func toTaskDTO() -> TaskDTO {
+            return TaskDTO(
+                date: Date(),
+                title: todo,
+                text: "Пользователь \(userId)",
+                isDone: completed            
+            )
+        }
+}
 
 public struct TaskDTO {
     var date: Date
