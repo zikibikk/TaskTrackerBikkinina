@@ -10,7 +10,7 @@ import SnapKit
 
 class TaskListViewController: UIViewController {
     
-    private let presenter: TaskListPresenterProtocol
+    var presenter: TaskListPresenterProtocol!
     
     private lazy var titleLabel: UILabel = {
         let titleLabel = UILabel()
@@ -47,23 +47,27 @@ class TaskListViewController: UIViewController {
         return titleLabel
     }()
     
+    private lazy var addTaskButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "square.and.pencil", withConfiguration: UIImage.SymbolConfiguration(pointSize: 28, weight: .medium))
+        button.setImage(image, for: .normal)
+        button.tintColor = .systemYellow
+        button.backgroundColor = .clear
+        button.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
+        return button
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         presenter.viewDidLoad()
         initializeView()
         setUpConstraints()
-        // Do any additional setup after loading the view.
-    }
-
-    init(tasksPresenter: TaskListPresenterProtocol) {
-        presenter = tasksPresenter
-        super.init(nibName: nil, bundle: nil)
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presenter.viewWillAppear()
     }
-
 }
 
 
@@ -82,16 +86,23 @@ extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         presenter.didSelectRowAt(indexPath: indexPath)
+        tableView.deselectRow(at: indexPath, animated: true)
         
     }
 }
 
 extension TaskListViewController {
+    
+    @objc private func addTaskTapped() {
+        presenter.didTapAddTask()
+    }
+    
     private func initializeView() {
         self.view.addSubview(titleLabel)
         self.view.addSubview(searchBar)
         self.view.addSubview(tableView)
         self.view.addSubview(bottomLabel)
+        self.view.addSubview(addTaskButton)
     }
     
     private func setUpConstraints() {
@@ -117,11 +128,20 @@ extension TaskListViewController {
             make.top.equalTo(tableView.snp.bottom)
             make.left.right.width.bottom.equalToSuperview()
         }
+        
+        addTaskButton.snp.makeConstraints { make in
+            make.centerY.equalTo(bottomLabel.snp.centerY)
+            make.right.equalToSuperview().inset(20)
+        }
     }
 }
 
 extension TaskListViewController: TaskListViewProtocol {
     func getBottomDescription(description: String) {
         self.bottomLabel.text = description
+    }
+    
+    func reloadTable() {
+        tableView.reloadData()
     }
 }

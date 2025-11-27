@@ -15,23 +15,53 @@ class TaskListInteractor {
 
 extension TaskListInteractor: TaskListInteractorProtocol {
     
-    func createTask(from task: TaskDTO) {
-        coreDataService.createTask(fromTask: task)
-    }
-    
-    func getAllTasks() -> [TaskModel] {
-        guard let tasks = coreDataService.fetchAllTasks() else {return []}
-        return tasks.map { entity in
-            return TaskModel(withEntity: entity)
+    func fetchTasksFromAPI(completion: @escaping ([TaskModel]) -> Void) {
+        APIService.shared.fetchTasks { [weak self] result in
+            switch result {
+            case .success(let tasksDTO):
+                tasksDTO.forEach { dto in
+                    self?.createTask(from: dto)
+                }
+                
+                let models = self?.getAllTasks() ?? []
+                DispatchQueue.main.async {
+                    completion(models)
+                }
+                
+            case .failure:
+                let local = self?.getAllTasks() ?? []
+                DispatchQueue.main.async {
+                    completion(local)
+                }
+            }
         }
     }
     
-    func getTask(withID id: UUID) -> TaskModel? {
-        guard let taskEntity = coreDataService.fetchTask(withID: id) else {return nil}
-        return TaskModel(withEntity: taskEntity)
+    
+    func createTask(from dto: TaskDTO, completion: (() -> Void)? = nil) {
+        coreDataService.createTask(dto) {
+            completion?()
+        }
     }
     
-    func updateTask(withID id: UUID, newTask: TaskDTO) -> Bool {
-        return coreDataService.updateTask(withID: id, newTask: newTask)
+    // MARK: Fetch All
+    func getAllTasks() -> [TaskModel] {
+        return coreDataService.fetchAllTasks().map { TaskModel(withEntity: $0) }
+    }
+    
+    // MARK: Fetch One
+    func getTask(withID id: UUID) -> TaskModel? {
+        guard let entity = coreDataService.fetchTask(id: id) else { return nil }
+        return TaskModel(withEntity: entity)
+    }
+    
+    // MARK: Update
+    func updateTask(withID id: UUID, newTask: TaskDTO, completion: ((Bool) -> Void)? = nil) {
+        coreDataService.updateTask(id: id, with: newTask, completion: completion)
+    }
+    
+    // MARK: Delete
+    func deleteTask(withID id: UUID, completion: ((Bool) -> Void)? = nil) {
+        coreDataService.deleteTask(id: id, completion: completion)
     }
 }
