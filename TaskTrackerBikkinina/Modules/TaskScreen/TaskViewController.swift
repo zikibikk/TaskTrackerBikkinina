@@ -49,10 +49,7 @@ final class TaskViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        presenter.viewWillDisappear(
-            title: titleLabel.text ?? "",
-            text: textView.text ?? ""
-        )
+        presenter.viewWillDisappear(title: titleLabel.text ?? "", text: textView.text ?? "")
     }
 
     private func setupNavigationBar() {

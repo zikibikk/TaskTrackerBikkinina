@@ -63,7 +63,11 @@ extension CoreDataService {
     // MARK: Fetch All (UI-safe)
     func fetchAllTasks() -> [TaskEntity] {
         let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-        return (try? viewContext.fetch(request)) ?? []
+            request.sortDescriptors = [
+                NSSortDescriptor(key: "date", ascending: false)
+            ]
+
+            return (try? viewContext.fetch(request)) ?? []
     }
 
     // MARK: Fetch One (UI-safe)
