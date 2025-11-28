@@ -12,6 +12,7 @@ final class TaskPresenter: TaskPresenterProtocol {
     private let interactor: TaskInteractorProtocol
     private let router: TaskRouterProtocol
     private let mode: TaskScreenMode
+    private var task: TaskModel?
 
     init(
         view: TaskViewProtocol,
@@ -31,6 +32,7 @@ final class TaskPresenter: TaskPresenterProtocol {
             view?.setEditable(true)
             view?.fill(title: "", date: Date().formatted(date: .numeric, time: .omitted), text: "")
         case .edit(let task):
+            self.task = task
             view?.setEditable(true)
             view?.fill(
                 title: task.title,
@@ -68,6 +70,8 @@ final class TaskPresenter: TaskPresenterProtocol {
                 }
                 return
             }
+            
+            if (title == task.title) && (text == task.text) { return }
 
             let dto = TaskDTO(
                 date: Date(),

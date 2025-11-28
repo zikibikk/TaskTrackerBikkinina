@@ -14,6 +14,16 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     private let router: TaskListRouterProtocol
 
     private var tasks: [TaskModel] = []
+    
+    private let apiLoadedKey = "apiLoaded"
+
+    private var isApiLoaded: Bool {
+        UserDefaults.standard.bool(forKey: apiLoadedKey)
+    }
+
+    private func setApiLoaded() {
+        UserDefaults.standard.set(true, forKey: apiLoadedKey)
+    }
 
     init(view: TaskListViewProtocol,
          interactor: TaskListInteractorProtocol,
@@ -47,10 +57,17 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     
 //MARK: data layer
     private func loadTasks() {
-        interactor.fetchTasksFromAPI { [weak self] models in
-            self?.tasks = models
-            self?.view?.reloadTable()
-            self?.view?.getBottomDescription(description: "\(models.count) задач")
+        tasks = interactor.getAllTasks()
+        if !isApiLoaded {
+            interactor.fetchTasksFromAPI { [weak self] models in
+                self?.tasks += models
+                self?.view?.reloadTable()
+                self?.view?.getBottomDescription(description: "\(models.count) задач")
+                self?.setApiLoaded()
+            }
+        } else {
+            self.view?.reloadTable()
+            self.view?.getBottomDescription(description: "\(tasks.count) задач")
         }
     }
     
