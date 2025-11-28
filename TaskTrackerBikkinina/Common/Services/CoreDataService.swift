@@ -12,14 +12,18 @@ public final class CoreDataService {
     
     public static let shared = CoreDataService()
 
-    private lazy var persistentContainer: NSPersistentContainer = {
+    // MARK: - Persistent Container
+    internal lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "TaskTrackerBikkinina")
-        container.loadPersistentStores { storeDescription, error in
+        container.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Unresolved CoreData error: \(error)")
             }
         }
+
         container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+
         return container
     }()
 
@@ -36,77 +40,76 @@ public final class CoreDataService {
     private init() {}
 }
 
-// MARK: - CRUD operations
+
+// MARK: - CRUD Operations
 extension CoreDataService {
 
     // MARK: Create
     func createTask(_ dto: TaskDTO, completion: (() -> Void)? = nil) {
         let context = newBackgroundContext()
-
         context.perform {
             let entity = TaskEntity(context: context)
             entity.getInfo(fromTask: dto)
 
             do {
                 try context.save()
-                DispatchQueue.main.async {
-                    completion?()
-                }
+                DispatchQueue.main.async { completion?() }
             } catch {
                 print("Failed to save new task:", error)
             }
         }
     }
 
-    // MARK: Fetch All
+    // MARK: Fetch All (UI-safe)
     func fetchAllTasks() -> [TaskEntity] {
         let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-
-        do {
-            return try viewContext.fetch(request)
-        } catch {
-            print("Failed to fetch tasks:", error)
-            return []
-        }
+        return (try? viewContext.fetch(request)) ?? []
     }
 
-    // MARK: Fetch One
+    // MARK: Fetch One (UI-safe)
     func fetchTask(id: UUID) -> TaskEntity? {
         let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id as NSUUID)
         request.fetchLimit = 1
-
         return try? viewContext.fetch(request).first
     }
 
-    // MARK: Update task
+    // MARK: Update Full Task (background)
     func updateTask(id: UUID, with dto: TaskDTO, completion: ((Bool) -> Void)? = nil) {
-        guard let task = fetchTask(id: id) else {
-            completion?(false)
-            return
-        }
+        let context = newBackgroundContext()
 
-        task.getInfo(fromTask: dto)
+        context.perform {
+            let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", id as NSUUID)
+            request.fetchLimit = 1
 
-        do {
-            try viewContext.save()
-            completion?(true)
-        } catch {
-            print("Failed to update:", error)
-            completion?(false)
+            guard let task = try? context.fetch(request).first else {
+                DispatchQueue.main.async { completion?(false) }
+                return
+            }
+
+            task.getInfo(fromTask: dto)
+
+            do {
+                try context.save()
+                DispatchQueue.main.async { completion?(true) }
+            } catch {
+                print("Failed to update:", error)
+                DispatchQueue.main.async { completion?(false) }
+            }
         }
     }
-    
-    // MARK: Update status
+
+    // MARK: Update Only Status (background)
     func updateTaskStatus(id: UUID, isDone: Bool, completion: @escaping (Bool) -> Void) {
 
-        let context = newBackgroundContext() 
+        let context = newBackgroundContext()
         context.perform {
-            
-            let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+            let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+            request.fetchLimit = 1
 
-            guard let entity = try? context.fetch(fetchRequest).first else {
+            guard let entity = try? context.fetch(request).first else {
                 DispatchQueue.main.async { completion(false) }
                 return
             }
@@ -123,23 +126,29 @@ extension CoreDataService {
         }
     }
 
-    // MARK: Delete
+    // MARK: Delete (background)
     func deleteTask(id: UUID, completion: ((Bool) -> Void)? = nil) {
-        guard let task = fetchTask(id: id) else {
-            completion?(false)
-            return
-        }
+        let context = newBackgroundContext()
 
-        viewContext.delete(task)
+        context.perform {
+            let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+            request.fetchLimit = 1
 
-        do {
-            try viewContext.save()
-            completion?(true)
-        } catch {
-            print("Failed to delete:", error)
-            completion?(false)
+            guard let task = try? context.fetch(request).first else {
+                DispatchQueue.main.async { completion?(false) }
+                return
+            }
+
+            context.delete(task)
+
+            do {
+                try context.save()
+                DispatchQueue.main.async { completion?(true) }
+            } catch {
+                print("Failed to delete:", error)
+                DispatchQueue.main.async { completion?(false) }
+            }
         }
     }
-    
-    
 }
