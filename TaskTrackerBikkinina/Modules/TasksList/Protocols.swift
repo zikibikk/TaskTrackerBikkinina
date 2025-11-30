@@ -45,7 +45,6 @@ protocol TaskListInteractorProtocol {
 protocol TaskListRouterProtocol {
     func openEditTask(task: TaskModel)
     func shareTask(_ task: TaskModel)
-    func deleteTask(_ task: TaskModel)
     func openTaskDetail(with task: TaskModel)
     func openCreateTaskScreen()
     func presentTaskOptions(_ task: TaskModel)
