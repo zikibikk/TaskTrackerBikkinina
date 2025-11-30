@@ -11,14 +11,17 @@ import SnapKit
 final class TaskViewController: UIViewController {
 
     var presenter: TaskPresenterProtocol!
-
-    private lazy var titleTextFiewld: UITextField = {
-        let tf = UITextField()
-        tf.textColor = .white
-        tf.font = .systemFont(ofSize: 28, weight: .bold)
-        tf.placeholder = "Название"
-        tf.accessibilityIdentifier = "taskTitleField"
-        return tf
+    
+    private lazy var titleTextView: UITextView = {
+        let tv = UITextView()
+        tv.textColor = .white
+        tv.font = .systemFont(ofSize: 28, weight: .bold)
+        tv.backgroundColor = .clear
+        tv.text = ""
+        tv.isScrollEnabled = false
+        tv.accessibilityIdentifier = "taskTitleField"
+        tv.delegate = self
+        return tv
     }()
 
     private lazy var dateLabel: UILabel = {
@@ -52,7 +55,7 @@ final class TaskViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        presenter.viewWillDisappear(title: titleTextFiewld.text ?? "", text: textView.text ?? "")
+        presenter.viewWillDisappear(title: titleTextView.text ?? "", text: textView.text ?? "")
     }
 
     private func setupNavigationBar() {
@@ -64,41 +67,55 @@ final class TaskViewController: UIViewController {
 extension TaskViewController {
 
     private func initializeView() {
-        view.addSubview(titleTextFiewld)
+        view.addSubview(titleTextView)
         view.addSubview(dateLabel)
         view.addSubview(textView)
     }
 
     private func setUpConstraints() {
-
-        titleTextFiewld.snp.makeConstraints { make in
+        
+        titleTextView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(16)
-            make.left.right.equalToSuperview().inset(20)
+            make.left.right.equalTo(view.safeAreaLayoutGuide).inset(20)
         }
 
         dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleTextFiewld.snp.bottom).offset(6)
-            make.left.equalTo(titleTextFiewld)
+            make.top.equalTo(titleTextView.snp.bottom).offset(6)
+            make.left.equalTo(titleTextView)
         }
 
         textView.snp.makeConstraints { make in
             make.top.equalTo(dateLabel.snp.bottom).offset(12)
-            make.left.right.equalTo(titleTextFiewld)
+            make.left.right.equalTo(titleTextView)
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).inset(20)
         }
     }
 }
 
+extension TaskViewController: UITextViewDelegate {
+
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+
+        let maxCharacters = 60
+        let current = textView.text ?? ""
+        guard let stringRange = Range(range, in: current) else { return false }
+        let updated = current.replacingCharacters(in: stringRange, with: text)
+
+        return updated.count <= maxCharacters
+    }
+}
+
+
 extension TaskViewController: TaskViewProtocol {
 
     func fill(title: String, date: String, text: String?) {
-        titleTextFiewld.text = title
+        titleTextView.text = title
         dateLabel.text = date
         textView.text = text
     }
 
     func setEditable(_ editable: Bool) {
-        titleTextFiewld.isEnabled = editable
+        titleTextView.isEditable = editable
         textView.isEditable = editable
     }
 }

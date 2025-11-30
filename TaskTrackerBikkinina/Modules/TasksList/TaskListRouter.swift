@@ -50,8 +50,4 @@ final class TaskListRouter: TaskListRouterProtocol {
             let avc = UIActivityViewController(activityItems: [text], applicationActivities: nil)
             viewController?.present(avc, animated: true)
         }
-    
-    func deleteTask(_ task: TaskModel) {
-        guard let id = task.id else { return }
-    }
 }
