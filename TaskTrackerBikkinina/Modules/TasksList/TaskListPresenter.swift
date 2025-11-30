@@ -14,6 +14,8 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     private let router: TaskListRouterProtocol
 
     private var tasks: [TaskModel] = []
+    private var filteredTasks: [TaskModel] = []
+    private var isFiltering: Bool = false
     
     private let apiLoadedKey = "apiLoaded"
 
@@ -87,11 +89,11 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     }
     
     func numberOfRowsInSection() -> Int {
-        return tasks.count
+        return isFiltering ? filteredTasks.count : tasks.count
     }
 
     func cellForRowAt(indexPath: IndexPath) -> TaskModel {
-        return tasks[indexPath.row]
+        return isFiltering ? filteredTasks[indexPath.row] : tasks[indexPath.row]
     }
 
     func didTapDelete(_ task: TaskModel) {
@@ -111,4 +113,20 @@ final class TaskListPresenter: TaskListPresenterProtocol {
             self.view?.reloadRow(at: indexPath)
         }
     }
+    
+    func filterTasks(by text: String) {
+        if text.isEmpty {
+            isFiltering = false
+            filteredTasks.removeAll()
+        } else {
+            isFiltering = true
+            filteredTasks = tasks.filter {
+                $0.title.lowercased().contains(text.lowercased())
+            }
+        }
+
+        view?.reloadTable()
+        view?.getBottomDescription(description: "\(numberOfRowsInSection()) задач")
+    }
+
 }

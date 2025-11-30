@@ -10,6 +10,7 @@ import UIKit
 protocol TaskListPresenterProtocol {
     func viewDidLoad()
     func viewWillAppear()
+    func filterTasks(by text: String)
     func numberOfRowsInSection() -> Int
     func cellForRowAt(indexPath: IndexPath) -> TaskModel
     func didSelectRowAt(indexPath: IndexPath)
