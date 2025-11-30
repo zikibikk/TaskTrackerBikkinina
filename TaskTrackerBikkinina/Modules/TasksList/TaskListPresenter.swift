@@ -38,7 +38,7 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     
 //MARK: navigation logic
     func didSelectRowAt(indexPath: IndexPath) {
-        router.openTaskDetail(with: tasks[indexPath.row])
+        isFiltering ? router.openTaskDetail(with: filteredTasks[indexPath.row]) : router.openTaskDetail(with: tasks[indexPath.row])
     }
     
     func didTapAddTask() {
