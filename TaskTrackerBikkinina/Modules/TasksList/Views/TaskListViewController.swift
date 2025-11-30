@@ -59,6 +59,7 @@ class TaskListViewController: UIViewController {
         button.tintColor = .systemYellow
         button.backgroundColor = .clear
         button.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
+        button.accessibilityIdentifier = "addTaskButton"
         return button
     }()
     
