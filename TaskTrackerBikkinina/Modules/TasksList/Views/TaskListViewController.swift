@@ -216,6 +216,9 @@ extension TaskListViewController {
 
         context.perform { [weak self] in
             context.mergeChanges(fromContextDidSave: notification)
+            if notification.userInfo?[NSUpdatedObjectsKey] != nil {
+                return
+            }
             self?.presenter?.viewWillAppear()
         }
     }
