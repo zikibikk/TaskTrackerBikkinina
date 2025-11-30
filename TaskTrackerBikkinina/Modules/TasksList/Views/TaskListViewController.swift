@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import CoreData
 
 class TaskListViewController: UIViewController {
     
@@ -18,12 +19,15 @@ class TaskListViewController: UIViewController {
         titleLabel.textColor = .white
         titleLabel.text = "Задачи"
         titleLabel.font = .systemFont(ofSize: 36, weight: .bold)
+        titleLabel.isUserInteractionEnabled = true
         return titleLabel
     }()
     
     private lazy var searchBar: UISearchBar = {
         let searchBar = UISearchBar()
         searchBar.searchBarStyle = .minimal
+        searchBar.placeholder = "Поиск"
+        searchBar.delegate = self
         return searchBar
     }()
     
@@ -35,6 +39,7 @@ class TaskListViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(TaskTableViewCell.self, forCellReuseIdentifier: "\(TaskTableViewCell.self)")
+        tableView.keyboardDismissMode = .onDrag
         return tableView
     }()
     
@@ -54,6 +59,7 @@ class TaskListViewController: UIViewController {
         button.tintColor = .systemYellow
         button.backgroundColor = .clear
         button.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
+        button.accessibilityIdentifier = "addTaskButton"
         return button
     }()
     
@@ -64,11 +70,16 @@ class TaskListViewController: UIViewController {
         presenter.viewDidLoad()
         initializeView()
         setUpConstraints()
+        NotificationCenter.default.addObserver( self, selector: #selector(contextDidSave(_:)), name: .NSManagedObjectContextDidSave, object: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         presenter.viewWillAppear()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
@@ -80,6 +91,7 @@ extension TaskListViewController {
         self.view.addSubview(tableView)
         self.view.addSubview(bottomLabel)
         self.view.addSubview(addTaskButton)
+        setupTapOutsideSearchBar()
     }
     
     private func setUpConstraints() {
@@ -111,9 +123,15 @@ extension TaskListViewController {
             make.right.equalToSuperview().inset(20)
         }
     }
+    
+    private func setupTapOutsideSearchBar() {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTapOutsideTouchBar(_:)))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+    }
 }
 
-//MARK: UITableViewDelegate, UITableViewDataSource
+//MARK: TableView delegates
 extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -135,6 +153,7 @@ extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
+//MARK: TableViewCell delegates
 extension TaskListViewController: TaskTableViewCellDelegate {
     func taskCellDidToggleStatus(_ cell: TaskTableViewCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
@@ -142,7 +161,18 @@ extension TaskListViewController: TaskTableViewCellDelegate {
     }
 }
 
-//MARK: TaskListViewProtocol
+//MARK: SearchBar delegates
+extension TaskListViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        presenter.filterTasks(by: searchText)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
+    }
+}
+
+//MARK: TaskListViewProtocol extension
 extension TaskListViewController: TaskListViewProtocol {
     func getBottomDescription(description: String) {
         self.bottomLabel.text = description
@@ -168,11 +198,26 @@ extension TaskListViewController {
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         let point = gesture.location(in: tableView)
 
-        guard let indexPath = tableView.indexPathForRow(at: point),
-              gesture.state == .began else { return }
+        guard let indexPath = tableView.indexPathForRow(at: point), gesture.state == .began else { return }
 
         let task = presenter.cellForRowAt(indexPath: indexPath)
         presenter.didLongTap(task)
+    }
+    
+    @objc private func handleTapOutsideTouchBar(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: view)
+        if !searchBar.frame.contains(location) {
+            searchBar.resignFirstResponder()
+        }
+    }
+    
+    @objc private func contextDidSave(_ notification: Notification) {
+        let context = CoreDataService.shared.viewContext
+
+        context.perform { [weak self] in
+            context.mergeChanges(fromContextDidSave: notification)
+            self?.presenter?.viewWillAppear()
+        }
     }
 }
 
