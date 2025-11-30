@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import CoreData
 
 class TaskListViewController: UIViewController {
     
@@ -64,11 +65,21 @@ class TaskListViewController: UIViewController {
         presenter.viewDidLoad()
         initializeView()
         setUpConstraints()
+        NotificationCenter.default.addObserver(
+               self,
+               selector: #selector(contextDidSave(_:)),
+               name: .NSManagedObjectContextDidSave,
+               object: nil
+        )
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         presenter.viewWillAppear()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
@@ -173,6 +184,15 @@ extension TaskListViewController {
 
         let task = presenter.cellForRowAt(indexPath: indexPath)
         presenter.didLongTap(task)
+    }
+    
+    @objc private func contextDidSave(_ notification: Notification) {
+        let context = CoreDataService.shared.viewContext
+
+        context.perform { [weak self] in
+            context.mergeChanges(fromContextDidSave: notification)
+            self?.presenter?.viewWillAppear()
+        }
     }
 }
 

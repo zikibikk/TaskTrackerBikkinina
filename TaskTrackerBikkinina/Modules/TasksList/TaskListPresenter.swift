@@ -71,6 +71,11 @@ final class TaskListPresenter: TaskListPresenterProtocol {
         }
     }
     
+    private func reloadTasks() {
+        tasks = interactor.getAllTasks()
+        view?.reloadTable()
+        view?.getBottomDescription(description: "\(tasks.count) задач")
+    }
     
 //MARK: view controller methods
     func viewDidLoad() {
@@ -79,12 +84,6 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     
     func viewWillAppear() {
         reloadTasks()
-    }
-    
-    private func reloadTasks() {
-        tasks = interactor.getAllTasks()
-        view?.reloadTable()
-        view?.getBottomDescription(description: "\(tasks.count) задач")
     }
     
     func numberOfRowsInSection() -> Int {
