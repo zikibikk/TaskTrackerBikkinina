@@ -105,12 +105,23 @@ final class TaskListPresenter: TaskListPresenterProtocol {
     }
     
     func didTapStatus(at indexPath: IndexPath) {
-        var task = tasks[indexPath.row]
-        task.isDone.toggle()
-
-        interactor.updateTaskStatus(id: task.id!, isDone: task.isDone) {
-            self.tasks[indexPath.row] = task
-            self.view?.reloadRow(at: indexPath)
+        
+        if isFiltering {
+            var task = filteredTasks[indexPath.row]
+            task.isDone.toggle()
+            interactor.updateTaskStatus(id: task.id!, isDone: task.isDone) {
+                
+                self.filteredTasks[indexPath.row] = task
+                self.view?.reloadRow(at: indexPath)
+            }
+        } else {
+            var task = tasks[indexPath.row]
+            task.isDone.toggle()
+            interactor.updateTaskStatus(id: task.id!, isDone: task.isDone) {
+                
+                self.tasks[indexPath.row] = task
+                self.view?.reloadRow(at: indexPath)
+            }
         }
     }
     
