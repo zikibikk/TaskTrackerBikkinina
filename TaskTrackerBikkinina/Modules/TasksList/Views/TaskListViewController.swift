@@ -11,6 +11,8 @@ import CoreData
 
 class TaskListViewController: UIViewController {
     
+    private var isStatusChanging: Bool = false
+    
     var presenter: TaskListPresenterProtocol!
     
     private lazy var titleLabel: UILabel = {
@@ -156,6 +158,7 @@ extension TaskListViewController: UITableViewDelegate, UITableViewDataSource {
 //MARK: TableViewCell delegates
 extension TaskListViewController: TaskTableViewCellDelegate {
     func taskCellDidToggleStatus(_ cell: TaskTableViewCell) {
+        isStatusChanging = true
         guard let indexPath = tableView.indexPath(for: cell) else { return }
         presenter.didTapStatus(at: indexPath)
     }
@@ -212,13 +215,15 @@ extension TaskListViewController {
     }
     
     @objc private func contextDidSave(_ notification: Notification) {
+        if isStatusChanging {
+            isStatusChanging = false
+            return
+        }
+        
         let context = CoreDataService.shared.viewContext
 
         context.perform { [weak self] in
             context.mergeChanges(fromContextDidSave: notification)
-            if notification.userInfo?[NSUpdatedObjectsKey] != nil {
-                return
-            }
             self?.presenter?.viewWillAppear()
         }
     }
